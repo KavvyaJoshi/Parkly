@@ -3,6 +3,11 @@ import { env } from './config/env.js';
 import { connectDB, disconnectDB } from './config/db.js';
 
 async function start() {
+  if (env.isProduction && !env.mongoUri) {
+    console.error('[db] MONGODB_URI must be set in production.');
+    process.exit(1);
+  }
+
   try {
     await connectDB(env.mongoUri);
   } catch (err) {

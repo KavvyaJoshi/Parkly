@@ -25,8 +25,12 @@ Parkly/
 └── server/                    # Express REST API
     └── src/
         ├── config/            # env + database connection
-        ├── middleware/        # error handling, 404
+        ├── controllers/       # request handlers
+        ├── middleware/        # auth, validation, error handling
+        ├── models/            # Mongoose models
         ├── routes/            # API routes
+        ├── validators/        # Zod request schemas
+        ├── utils/
         └── tests/
 ```
 
@@ -70,6 +74,8 @@ npm run dev             # http://localhost:5173
 | ------------- | --------------------------------------------- |
 | `PORT`        | API port (default `5000`)                     |
 | `MONGODB_URI` | MongoDB connection string                     |
+| `JWT_SECRET`  | Secret for signing login tokens (required in production) |
+| `JWT_EXPIRES_IN` | Token lifetime (default `7d`)              |
 | `CLIENT_URL`  | Allowed frontend origin(s), comma-separated   |
 
 **client/.env.local**
@@ -78,11 +84,26 @@ npm run dev             # http://localhost:5173
 | -------------- | --------------------------------------------- |
 | `VITE_API_URL` | Base URL of the API, e.g. `http://localhost:5000/api` |
 
+## API
+
+| Method | Endpoint             | Auth   | Description                          |
+| ------ | -------------------- | ------ | ------------------------------------ |
+| GET    | `/api/health`        | —      | Service and database status          |
+| POST   | `/api/auth/register` | —      | Create an account, returns a JWT     |
+| POST   | `/api/auth/login`    | —      | Log in, returns a JWT                |
+| GET    | `/api/auth/me`       | Bearer | Current user's profile               |
+
+Authenticated requests send `Authorization: Bearer <token>`.
+
+## Testing
+
+Server tests run against a real MongoDB. Locally, an in-memory MongoDB is started automatically (`mongodb-memory-server`), so no database installation is needed. In CI, a MongoDB 7 service container is used instead via `MONGODB_TEST_URI`.
+
 ## Continuous integration
 
 Every push and pull request to `main` runs the [CI workflow](.github/workflows/ci.yml), with two parallel jobs:
 
 - **Client:** install → lint → test → production build
-- **Server:** install → lint → test
+- **Server:** install → lint → test (against a MongoDB service container)
 
 A failure in any step fails the pipeline.

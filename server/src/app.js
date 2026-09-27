@@ -5,11 +5,15 @@ import morgan from 'morgan';
 
 import { env } from './config/env.js';
 import healthRoutes from './routes/health.routes.js';
+import authRoutes from './routes/auth.routes.js';
 import { notFound } from './middleware/notFound.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 export function createApp() {
   const app = express();
+
+  // Behind a hosting proxy (e.g. Render), trust the first hop so req.ip and rate limiting work.
+  if (env.isProduction) app.set('trust proxy', 1);
 
   app.use(helmet());
   app.use(
@@ -29,6 +33,7 @@ export function createApp() {
   }
 
   app.use('/api/health', healthRoutes);
+  app.use('/api/auth', authRoutes);
 
   app.use(notFound);
   app.use(errorHandler);
