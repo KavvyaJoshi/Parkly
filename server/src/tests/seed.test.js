@@ -15,6 +15,9 @@ describe('demo seed data', () => {
     const result = await seedDemoData();
 
     expect(result).toEqual({ hosts: 5, listings: 30 });
+    // Demo hosts get a real bcrypt hash of an unknown password, so nobody can log in as them.
+    const host = await User.findOne({ isDemo: true }).select('+password');
+    expect(host.password).toMatch(/^\$2[aby]\$12\$/);
     const spaces = await ParkingSpace.find();
     expect(spaces.every((s) => s.isDemo && s.isPublished)).toBe(true);
 

@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import bcrypt from 'bcryptjs';
 
 import { Booking } from '../models/Booking.js';
 import { ParkingSpace } from '../models/ParkingSpace.js';
@@ -18,15 +19,19 @@ export async function seedDemoData() {
   await ParkingSpace.deleteMany({ isDemo: true });
   await User.deleteMany({ isDemo: true });
 
-  const hosts = {};
-  for (const host of DEMO_HOSTS) {
-    hosts[host.key] = await User.create({
+  // Demo hosts share one hash of a random, never-stored password: nobody can log in as them,
+  // and hashing once (instead of per host) keeps seeding fast. insertMany skips the
+  // User pre-save hook, so the value is stored as-is.
+  const unusablePasswordHash = await bcrypt.hash(crypto.randomBytes(24).toString('hex'), 12);
+  const createdHosts = await User.insertMany(
+    DEMO_HOSTS.map((host) => ({
       name: host.name,
       email: host.email,
-      password: crypto.randomBytes(24).toString('hex'),
+      password: unusablePasswordHash,
       isDemo: true,
-    });
-  }
+    })),
+  );
+  const hosts = Object.fromEntries(DEMO_HOSTS.map((host, i) => [host.key, createdHosts[i]]));
 
   const areaByName = Object.fromEntries(PUNE_AREAS.map((area) => [area.name, area]));
 
