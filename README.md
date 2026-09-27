@@ -101,7 +101,9 @@ npm run dev             # http://localhost:5173
 | PATCH  | `/api/listings/:id`  | Bearer | Update / publish / unpublish (owner only) |
 | DELETE | `/api/listings/:id`  | Bearer | Delete a listing (owner only; blocked if it has upcoming bookings) |
 | POST   | `/api/bookings`      | Bearer | Book a space: `{ spaceId, date, time, duration, vehicleNumber }` |
+| GET    | `/api/bookings/mine` | Bearer | My bookings as a driver: `?type=upcoming\|past\|cancelled`, with counts |
 | GET    | `/api/bookings/:id`  | Bearer | Booking details (driver or space owner only) |
+| PATCH  | `/api/bookings/:id/cancel` | Bearer | Cancel before the start time (driver or space owner) |
 
 Authenticated requests send `Authorization: Bearer <token>`.
 

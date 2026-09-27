@@ -7,6 +7,8 @@ const variants = {
   primary: 'bg-brand-600 text-white shadow-sm hover:bg-brand-700',
   secondary: 'bg-white text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50',
   ghost: 'text-slate-700 hover:bg-slate-100 hover:text-slate-900',
+  danger: 'bg-red-600 text-white shadow-sm hover:bg-red-700',
+  dangerOutline: 'bg-white text-red-700 shadow-sm ring-1 ring-inset ring-red-200 hover:bg-red-50',
   light: 'bg-white text-brand-700 shadow-sm hover:bg-brand-50',
   outlineLight: 'text-white ring-1 ring-inset ring-white/40 hover:bg-white/10',
 };

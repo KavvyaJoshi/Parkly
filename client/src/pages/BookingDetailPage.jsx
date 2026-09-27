@@ -1,21 +1,19 @@
+import { useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router';
 import { CalendarDays, Car, CheckCircle2, Navigation, Phone, ReceiptIndianRupee, ScrollText, UserRound } from 'lucide-react';
 
 import Alert from '../components/ui/Alert.jsx';
 import Button from '../components/ui/Button.jsx';
 import Container from '../components/ui/Container.jsx';
+import ConfirmDialog from '../components/ui/ConfirmDialog.jsx';
 import { PageSpinner } from '../components/ui/Spinner.jsx';
+import BookingStatusBadge from '../components/booking/BookingStatusBadge.jsx';
 import DemoBadge from '../components/listing/DemoBadge.jsx';
 import ListingPhoto from '../components/listing/ListingPhoto.jsx';
 import { useApiQuery } from '../hooks/useApiQuery.js';
 import { bookingsService } from '../services/bookings.service.js';
 import { formatBookingRange } from '../utils/bookingTime.js';
 import { formatHours, formatINR } from '../utils/format.js';
-
-const STATUS_STYLES = {
-  confirmed: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-  cancelled: 'bg-slate-100 text-slate-600 ring-slate-200',
-};
 
 function Row({ icon: Icon, label, children }) {
   return (
@@ -34,29 +32,48 @@ export default function BookingDetailPage() {
   const location = useLocation();
   const justBooked = Boolean(location.state?.justBooked);
   const { data, error, isLoading } = useApiQuery(id, () => bookingsService.getById(id));
+  const [updated, setUpdated] = useState(null);
+  const [confirming, setConfirming] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState('');
 
   if (error) {
     return (
       <Container className="py-16">
         <Alert tone="error">{error.status === 404 ? 'We couldn’t find this booking.' : error.message}</Alert>
-        <Button to="/account" variant="secondary" className="mt-6">
-          Go to my account
+        <Button to="/bookings" variant="secondary" className="mt-6">
+          My bookings
         </Button>
       </Container>
     );
   }
   if (isLoading || !data) return <PageSpinner label="Loading booking" />;
 
-  const { booking } = data;
+  const booking = updated ?? data.booking;
   const { space } = booking;
   const isOwnerView = booking.viewerRole === 'owner';
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${space.location.lat},${space.location.lng}`;
   const contact = isOwnerView ? booking.driver : booking.host;
+  const showBookedBanner = justBooked && booking.status === 'confirmed';
+
+  const handleCancel = async () => {
+    setCancelling(true);
+    setCancelError('');
+    try {
+      const result = await bookingsService.cancel(booking.id);
+      setUpdated(result.booking);
+    } catch (err) {
+      setCancelError(err.message);
+    } finally {
+      setCancelling(false);
+      setConfirming(false);
+    }
+  };
 
   return (
     <Container className="py-8 sm:py-12">
       <div className="mx-auto max-w-3xl">
-        {justBooked && (
+        {showBookedBanner && (
           <div className="mb-8 rounded-2xl bg-emerald-50 p-6 text-center ring-1 ring-emerald-200" role="status">
             <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-500" aria-hidden="true" />
             <h1 className="mt-3 text-2xl font-bold text-slate-900">Your parking is booked!</h1>
@@ -67,17 +84,33 @@ export default function BookingDetailPage() {
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          {justBooked ? (
+          {showBookedBanner ? (
             <h2 className="text-xl font-semibold text-slate-900">Booking details</h2>
           ) : (
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
               Booking <span className="font-mono">{booking.reference}</span>
             </h1>
           )}
-          <span className={`rounded-full px-3 py-1 text-sm font-semibold capitalize ring-1 ring-inset ${STATUS_STYLES[booking.status]}`}>
-            {booking.status}
-          </span>
+          <BookingStatusBadge booking={booking} className="px-3 py-1 text-sm" />
         </div>
+
+        {updated?.status === 'cancelled' && (
+          <Alert tone="success" className="mt-6">
+            Booking cancelled. The space has been released.
+          </Alert>
+        )}
+        {booking.status === 'cancelled' && !updated && booking.cancelledBy && (
+          <p className="mt-4 text-sm text-slate-500">
+            {booking.cancelledBy === (isOwnerView ? 'owner' : 'driver')
+              ? 'You cancelled this booking.'
+              : `Cancelled by the ${booking.cancelledBy === 'owner' ? 'host' : 'driver'}.`}
+          </p>
+        )}
+        {cancelError && (
+          <Alert tone="error" className="mt-6">
+            {cancelError}
+          </Alert>
+        )}
 
         {booking.isDemo && (
           <Alert tone="info" className="mt-6">
@@ -152,11 +185,37 @@ export default function BookingDetailPage() {
         )}
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Button to="/search">Find more parking</Button>
-          <Button to="/account" variant="secondary">
-            Go to my account
-          </Button>
+          {isOwnerView ? (
+            <Button to="/search">Find parking</Button>
+          ) : (
+            <>
+              <Button to="/bookings">My bookings</Button>
+              <Button to="/search" variant="secondary">
+                Find more parking
+              </Button>
+            </>
+          )}
+          {booking.canCancel && (
+            <Button variant="dangerOutline" className="sm:ml-auto" onClick={() => setConfirming(true)}>
+              Cancel booking
+            </Button>
+          )}
         </div>
+
+        <ConfirmDialog
+          open={confirming}
+          title="Cancel this booking?"
+          description={
+            isOwnerView
+              ? 'The driver will lose this reservation and the time slot will become available again.'
+              : 'Your reservation will be released and someone else may book this time slot.'
+          }
+          confirmLabel="Yes, cancel booking"
+          cancelLabel="Keep booking"
+          busy={cancelling}
+          onConfirm={handleCancel}
+          onCancel={() => setConfirming(false)}
+        />
       </div>
     </Container>
   );

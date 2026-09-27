@@ -3,35 +3,12 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { demoUser, mockApi, renderApp } from './renderWithRouter.jsx';
-import { makeListing } from './fixtures.js';
+import { makeBooking, makeListing } from './fixtures.js';
 import { formatBookingRange, isValidVehicleNumber } from '../utils/bookingTime.js';
 
 // 2030-01-07 is a Monday; the fixture space is open Mon–Sat 08:00–20:00.
 const SLOT = 'date=2030-01-07&time=10:00&duration=2';
 const text = (el) => el.textContent.replace(/\s+/g, ' ');
-
-function makeBooking(overrides = {}) {
-  return {
-    id: 'b1',
-    reference: 'PK-7FK2QX',
-    status: 'confirmed',
-    startTime: '2030-01-07T04:30:00.000Z',
-    endTime: '2030-01-07T06:30:00.000Z',
-    hours: 2,
-    pricePerHour: 40,
-    totalPrice: 80,
-    vehicleNumber: 'MH12AB1234',
-    isDemo: true,
-    viewerRole: 'driver',
-    space: makeListing({
-      isExactLocation: true,
-      address: { line1: 'Sai Vihar Society, Lane 5', area: 'Baner', pincode: '411045', landmark: 'Near Balewadi High Street' },
-      location: { lat: 18.5611, lng: 73.7902 },
-    }),
-    host: { name: 'Anjali Patwardhan', phone: '9822012345' },
-    ...overrides,
-  };
-}
 
 function loggedIn(routes) {
   localStorage.setItem('parkly.token', 'token');

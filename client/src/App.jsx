@@ -11,6 +11,7 @@ import SignupPage from './pages/SignupPage.jsx';
 import AccountPage from './pages/AccountPage.jsx';
 import CheckoutPage from './pages/CheckoutPage.jsx';
 import BookingDetailPage from './pages/BookingDetailPage.jsx';
+import MyBookingsPage from './pages/MyBookingsPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import PlaceholderPage from './pages/PlaceholderPage.jsx';
 
@@ -39,6 +40,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="account" element={<AccountPage />} />
           <Route path="book/:listingId" element={<CheckoutPage />} />
+          <Route path="bookings" element={<MyBookingsPage />} />
           <Route path="bookings/:id" element={<BookingDetailPage />} />
         </Route>
 

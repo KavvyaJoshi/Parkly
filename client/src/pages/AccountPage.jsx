@@ -48,11 +48,14 @@ export default function AccountPage() {
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <div className="rounded-2xl bg-slate-50 p-6 ring-1 ring-slate-200">
-            <h2 className="font-semibold text-slate-900">Need a spot?</h2>
-            <p className="mt-1 text-sm text-slate-600">Search hourly parking across Pune.</p>
-            <Button to="/search" className="mt-4">
-              Find parking
-            </Button>
+            <h2 className="font-semibold text-slate-900">Your bookings</h2>
+            <p className="mt-1 text-sm text-slate-600">See upcoming and past parking, or cancel a booking.</p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Button to="/bookings">My bookings</Button>
+              <Button to="/search" variant="secondary">
+                Find parking
+              </Button>
+            </div>
           </div>
           <div className="rounded-2xl bg-slate-50 p-6 ring-1 ring-slate-200">
             <h2 className="flex items-center gap-2 font-semibold text-slate-900">

@@ -170,6 +170,100 @@ describe('GET /api/bookings/:id', () => {
   });
 });
 
+/** Insert a booking directly (bypassing API checks) to simulate past or in-progress bookings. */
+async function insertBooking({ startOffsetHours, hours = 2, status = 'confirmed', driverUser = driver.user }) {
+  const start = new Date(Math.floor(Date.now() / 1_800_000) * 1_800_000 + startOffsetHours * 3_600_000);
+  const end = new Date(start.getTime() + hours * 3_600_000);
+  const slots = [];
+  for (let t = start.getTime(); t < end.getTime(); t += 1_800_000) slots.push(new Date(t));
+  return Booking.create({
+    reference: `PK-T${Math.random().toString(36).slice(2, 7).toUpperCase()}`,
+    space: space.id,
+    driver: driverUser._id,
+    owner: host.user._id,
+    startTime: start,
+    endTime: end,
+    hours,
+    pricePerHour: 40,
+    totalPrice: 40 * hours,
+    vehicleNumber: 'MH12AB1234',
+    status,
+    slots,
+    ...(status === 'cancelled' && { cancelledAt: new Date(), cancelledBy: 'driver' }),
+  });
+}
+
+describe('GET /api/bookings/mine', () => {
+  it('splits my bookings into upcoming (incl. in progress), past and cancelled', async () => {
+    await insertBooking({ startOffsetHours: -48 }); // past
+    await insertBooking({ startOffsetHours: -1 }); // in progress
+    await insertBooking({ startOffsetHours: 24 }); // upcoming
+    await insertBooking({ startOffsetHours: 48, status: 'cancelled' });
+    await insertBooking({ startOffsetHours: 72, driverUser: (await createUser()).user }); // someone else's
+
+    const get = (type) => request(app).get('/api/bookings/mine').query({ type }).set('Authorization', driver.auth);
+    const upcoming = await get('upcoming');
+
+    expect(upcoming.status).toBe(200);
+    expect(upcoming.body.counts).toEqual({ upcoming: 2, past: 1, cancelled: 1 });
+    // Soonest first: the in-progress booking comes before tomorrow's.
+    const [first, second] = upcoming.body.bookings;
+    expect(new Date(first.startTime) < new Date(second.startTime)).toBe(true);
+
+    expect((await get('past')).body.bookings).toHaveLength(1);
+    expect((await get('cancelled')).body.bookings[0].status).toBe('cancelled');
+  });
+
+  it('requires login', async () => {
+    expect((await request(app).get('/api/bookings/mine')).status).toBe(401);
+  });
+});
+
+describe('PATCH /api/bookings/:id/cancel', () => {
+  const cancel = (id, auth = driver.auth) =>
+    request(app).patch(`/api/bookings/${id}/cancel`).set('Authorization', auth);
+
+  it('lets the driver cancel before it starts, hiding the exact address and freeing the slot', async () => {
+    const { body } = await book();
+    expect(body.booking.canCancel).toBe(true);
+
+    const res = await cancel(body.booking.id);
+
+    expect(res.status).toBe(200);
+    expect(res.body.booking).toMatchObject({ status: 'cancelled', cancelledBy: 'driver', canCancel: false });
+    expect(res.body.booking.space.address).not.toHaveProperty('line1');
+    expect((await book({}, (await createUser()).auth)).status).toBe(201);
+  });
+
+  it('lets the space owner cancel', async () => {
+    const { body } = await book();
+    const res = await cancel(body.booking.id, host.auth);
+
+    expect(res.status).toBe(200);
+    expect(res.body.booking.cancelledBy).toBe('owner');
+  });
+
+  it('refuses to cancel a booking that has started', async () => {
+    const started = await insertBooking({ startOffsetHours: -1 });
+    const res = await cancel(started._id.toString());
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/already started/i);
+  });
+
+  it('refuses to cancel twice', async () => {
+    const { body } = await book();
+    await cancel(body.booking.id);
+    expect((await cancel(body.booking.id)).status).toBe(409);
+  });
+
+  it('hides other people’s bookings', async () => {
+    const { body } = await book();
+    const stranger = await createUser();
+    expect((await cancel(body.booking.id, stranger.auth)).status).toBe(404);
+  });
+});
+
 describe('bookings and listings', () => {
   it('hides booked spaces from search for overlapping slots only', async () => {
     await book(); // 10:00–12:00

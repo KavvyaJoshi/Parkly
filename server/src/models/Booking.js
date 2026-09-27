@@ -24,6 +24,7 @@ const bookingSchema = new mongoose.Schema(
     vehicleNumber: { type: String, required: true, uppercase: true, trim: true },
     status: { type: String, enum: ['confirmed', 'cancelled'], default: 'confirmed' },
     cancelledAt: Date,
+    cancelledBy: { type: String, enum: ['driver', 'owner'] },
     // Start of every 30-minute slot this booking occupies. The unique index below makes
     // MongoDB reject overlapping confirmed bookings, even for simultaneous requests.
     slots: { type: [Date], required: true },

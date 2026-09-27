@@ -35,6 +35,8 @@ export function serializeBooking(booking, viewer) {
       ? { driver: { name: booking.driver.name, phone: booking.driver.phone } }
       : {}),
     cancelledAt: booking.cancelledAt,
+    cancelledBy: booking.cancelledBy,
+    canCancel: booking.status === 'confirmed' && booking.startTime > new Date(),
     createdAt: booking.createdAt,
   };
 }
@@ -97,17 +99,68 @@ export async function createBooking(req, res) {
   res.status(201).json({ success: true, booking: serializeBooking(booking, req.user) });
 }
 
-export async function getBooking(req, res) {
-  const { id } = req.params;
+const SPACE_WITH_HOST = { path: 'space', populate: { path: 'owner', select: 'name phone createdAt' } };
+
+/** Load a booking the current user is part of (as driver or space owner), or 404. */
+async function findVisibleBooking(id, user) {
   const booking = mongoose.isValidObjectId(id)
-    ? await Booking.findById(id)
-        .populate({ path: 'space', populate: { path: 'owner', select: 'name phone createdAt' } })
-        .populate('driver', 'name phone')
+    ? await Booking.findById(id).populate(SPACE_WITH_HOST).populate('driver', 'name phone')
     : null;
 
-  // Only the driver and the space owner can see a booking.
-  const canView = booking && (booking.driver._id.equals(req.user._id) || booking.owner.equals(req.user._id));
+  const canView = booking && (booking.driver._id.equals(user._id) || booking.owner.equals(user._id));
   if (!canView || !booking.space) throw new AppError('Booking not found', 404);
+  return booking;
+}
+
+export async function getBooking(req, res) {
+  const booking = await findVisibleBooking(req.params.id, req.user);
+  res.json({ success: true, booking: serializeBooking(booking, req.user) });
+}
+
+const MY_BOOKING_VIEWS = {
+  upcoming: { filter: (now) => ({ status: 'confirmed', endTime: { $gt: now } }), sort: { startTime: 1 } },
+  past: { filter: (now) => ({ status: 'confirmed', endTime: { $lte: now } }), sort: { startTime: -1 } },
+  cancelled: { filter: () => ({ status: 'cancelled' }), sort: { cancelledAt: -1 } },
+};
+
+/** The current user's bookings as a driver, split into upcoming (incl. in progress), past and cancelled. */
+export async function getMyBookings(req, res) {
+  const type = MY_BOOKING_VIEWS[req.query.type] ? req.query.type : 'upcoming';
+  const now = new Date();
+  const mine = { driver: req.user._id };
+
+  const [bookings, ...counts] = await Promise.all([
+    Booking.find({ ...mine, ...MY_BOOKING_VIEWS[type].filter(now) })
+      .sort(MY_BOOKING_VIEWS[type].sort)
+      .limit(100)
+      .populate(SPACE_WITH_HOST),
+    ...Object.values(MY_BOOKING_VIEWS).map((view) => Booking.countDocuments({ ...mine, ...view.filter(now) })),
+  ]);
+
+  res.json({
+    success: true,
+    type,
+    counts: Object.fromEntries(Object.keys(MY_BOOKING_VIEWS).map((key, i) => [key, counts[i]])),
+    // Bookings whose space was since deleted can't be shown meaningfully.
+    bookings: bookings.filter((b) => b.space).map((b) => serializeBooking(b, req.user)),
+  });
+}
+
+/** Cancel a booking before it starts. Either the driver or the space owner may cancel. */
+export async function cancelBooking(req, res) {
+  const booking = await findVisibleBooking(req.params.id, req.user);
+
+  if (booking.status === 'cancelled') {
+    throw new AppError('This booking is already cancelled', 409);
+  }
+  if (booking.startTime <= new Date()) {
+    throw new AppError('This booking has already started, so it can’t be cancelled', 400);
+  }
+
+  booking.status = 'cancelled';
+  booking.cancelledAt = new Date();
+  booking.cancelledBy = booking.owner.equals(req.user._id) ? 'owner' : 'driver';
+  await booking.save();
 
   res.json({ success: true, booking: serializeBooking(booking, req.user) });
 }
