@@ -14,14 +14,42 @@
   --color-brand-700: #4338ca;
   --color-brand-800: #3730a3;
   --color-brand-900: #312e81;
+  --color-brand-950: #1e1b4b;
 }
 
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
   }
 
   body {
     @apply bg-white text-slate-900;
+  }
+
+  /* One consistent, high-contrast focus ring for keyboard users. */
+  :focus-visible {
+    outline: 2px solid var(--color-brand-600);
+    outline-offset: 2px;
+  }
+
+  input[type='range'] {
+    accent-color: var(--color-brand-600);
+  }
+}
+
+@layer components {
+  .form-label {
+    @apply mb-1.5 block text-sm font-medium text-slate-700;
+  }
+
+  .form-input {
+    @apply block min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-base text-slate-900 placeholder:text-slate-400 hover:border-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30;
   }
 }
