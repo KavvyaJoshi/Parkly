@@ -29,6 +29,8 @@ Parkly/
         ├── middleware/        # auth, validation, error handling
         ├── models/            # Mongoose models
         ├── routes/            # API routes
+        ├── services/          # business logic (e.g. listing search)
+        ├── seed/              # Pune demo data + seed script
         ├── validators/        # Zod request schemas
         ├── utils/
         └── tests/
@@ -92,8 +94,25 @@ npm run dev             # http://localhost:5173
 | POST   | `/api/auth/register` | —      | Create an account, returns a JWT     |
 | POST   | `/api/auth/login`    | —      | Log in, returns a JWT                |
 | GET    | `/api/auth/me`       | Bearer | Current user's profile               |
+| GET    | `/api/listings`      | —      | Search published parking spaces      |
+| GET    | `/api/listings/:id`  | Optional | Listing details (owners also see their drafts) |
+| GET    | `/api/listings/mine` | Bearer | The current user's own listings      |
+| POST   | `/api/listings`      | Bearer | Create a listing                     |
+| PATCH  | `/api/listings/:id`  | Bearer | Update / publish / unpublish (owner only) |
+| DELETE | `/api/listings/:id`  | Bearer | Delete a listing (owner only)        |
 
 Authenticated requests send `Authorization: Bearer <token>`.
+
+**Search parameters** (`GET /api/listings`): `location` (a Pune area such as `Baner` searches nearby; anything else matches address text), `lat`/`lng`/`radius` (km), `minPrice`, `maxPrice`, `amenities` (comma-separated, all required), `vehicleSize` (`hatchback`, `sedan`, `suv`), `spaceType`, `is24x7`, `date` + `time` + `duration` (only spaces open for that slot), `sort` (`relevance`, `price_asc`, `price_desc`, `distance`, `newest`), `page`, `limit`.
+
+## Demo data
+
+```bash
+cd server
+npm run seed
+```
+
+Adds 30 fictional parking listings across 10 Pune neighbourhoods (Baner, Hinjawadi, Viman Nagar, Koregaon Park, Kalyani Nagar, Shivajinagar, Wakad, Aundh, Kothrud, Hadapsar), owned by 5 demo hosts. Areas and landmarks are real places, but the spaces, hosts and prices are made up; every demo listing is flagged `isDemo` and labelled as a demo in the app. Re-running the seed replaces only demo data, never real users or listings.
 
 ## Testing
 

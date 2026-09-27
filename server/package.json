@@ -12,7 +12,8 @@
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "seed": "node src/seed/run.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

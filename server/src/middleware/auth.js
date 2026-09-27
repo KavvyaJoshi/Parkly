@@ -26,3 +26,16 @@ export async function requireAuth(req, res, next) {
   req.user = user;
   next();
 }
+
+/** Attach req.user when a valid token is sent, but let anonymous requests through. */
+export async function optionalAuth(req, res, next) {
+  const [scheme, token] = (req.headers.authorization ?? '').split(' ');
+  if (scheme === 'Bearer' && token) {
+    try {
+      req.user = await User.findById(verifyToken(token).sub);
+    } catch {
+      // Invalid token on a public route: treat the request as anonymous.
+    }
+  }
+  next();
+}

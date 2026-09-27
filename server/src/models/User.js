@@ -30,6 +30,8 @@ const userSchema = new mongoose.Schema(
       required: [true, 'Password is required'],
       select: false,
     },
+    // Seeded demo hosts that own the sample listings.
+    isDemo: { type: Boolean, default: false, select: false },
   },
   {
     timestamps: true,
