@@ -76,6 +76,12 @@ export const updateListingSchema = z
   .partial()
   .refine((data) => Object.keys(data).length > 0, { error: 'Nothing to update' });
 
+export const reorderPhotosSchema = z.object({
+  photoIds: z.array(z.string().regex(/^[a-f\d]{24}$/i, { error: 'Invalid photo id' }), {
+    error: 'Provide the photo ids in the new order',
+  }),
+});
+
 const csv = (allowed) =>
   z
     .string()

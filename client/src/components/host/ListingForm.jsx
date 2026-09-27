@@ -5,6 +5,7 @@ import Alert from '../ui/Alert.jsx';
 import Button from '../ui/Button.jsx';
 import FormField from '../ui/FormField.jsx';
 import Spinner from '../ui/Spinner.jsx';
+import PhotoPicker from './PhotoPicker.jsx';
 import { AMENITIES, SPACE_TYPES, VEHICLE_SIZES } from '../../constants/listing.js';
 import { PUNE_AREAS } from '../../data/areas.js';
 import { ApiError } from '../../services/api.js';
@@ -57,6 +58,7 @@ export default function ListingForm({ listing, onSubmit }) {
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [photoFiles, setPhotoFiles] = useState([]); // new listings only; uploaded after creation
 
   const set = (patch) => {
     setValues((prev) => ({ ...prev, ...patch }));
@@ -105,7 +107,7 @@ export default function ListingForm({ listing, onSubmit }) {
 
     setSubmitting(true);
     try {
-      await onSubmit(toPayload(values), { publish });
+      await onSubmit(toPayload(values), { publish, photoFiles });
     } catch (err) {
       if (err instanceof ApiError && Object.keys(err.fieldErrors).length) {
         setErrors(mapServerErrors(err.fieldErrors));
@@ -201,6 +203,12 @@ export default function ListingForm({ listing, onSubmit }) {
           </div>
         </fieldset>
       </Section>
+
+      {!isEdit && (
+        <Section title="Photos" description="Optional, but spaces with photos get booked more. You can add more later.">
+          <PhotoPicker files={photoFiles} onChange={setPhotoFiles} />
+        </Section>
+      )}
 
       <Section title="Location" description="The full address is only shown to drivers after they book.">
         <div className="grid gap-5 sm:grid-cols-2">

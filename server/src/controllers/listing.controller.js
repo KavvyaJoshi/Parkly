@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 import { Booking } from '../models/Booking.js';
 import { ParkingSpace, serializeSpace } from '../models/ParkingSpace.js';
+import { imageStorage } from '../services/imageStorage.js';
 import { searchListings } from '../services/listingSearch.js';
 import { AppError } from '../utils/AppError.js';
 
@@ -17,7 +18,7 @@ function toDocumentFields(body) {
   };
 }
 
-async function findOwnedSpace(id, user) {
+export async function findOwnedSpace(id, user) {
   const space = mongoose.isValidObjectId(id) ? await ParkingSpace.findById(id) : null;
   if (!space) throw new AppError('Parking space not found', 404);
   if (!space.owner.equals(user._id)) {
@@ -79,5 +80,7 @@ export async function deleteListing(req, res) {
   }
 
   await space.deleteOne();
+  // Clean up the space's photos in storage (best effort — failures are only logged).
+  await Promise.all(space.photos.map((photo) => imageStorage.destroy(photo.publicId)));
   res.json({ success: true, message: 'Parking space deleted' });
 }

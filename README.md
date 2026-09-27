@@ -79,6 +79,7 @@ npm run dev             # http://localhost:5173
 | `JWT_SECRET`  | Secret for signing login tokens (required in production) |
 | `JWT_EXPIRES_IN` | Token lifetime (default `7d`)              |
 | `CLIENT_URL`  | Allowed frontend origin(s), comma-separated   |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Listing photo storage (optional; uploads are disabled without them) |
 
 **client/.env.local**
 
@@ -104,6 +105,9 @@ npm run dev             # http://localhost:5173
 | GET    | `/api/bookings/mine` | Bearer | My bookings as a driver: `?type=upcoming\|past\|cancelled`, with counts |
 | GET    | `/api/bookings/:id`  | Bearer | Booking details (driver or space owner only) |
 | PATCH  | `/api/bookings/:id/cancel` | Bearer | Cancel before the start time (driver or space owner) |
+| POST   | `/api/listings/:id/photos` | Bearer | Upload photos (multipart `photos`, JPG/PNG/WebP/HEIC, ≤5 MB each, max 8 per space) |
+| PUT    | `/api/listings/:id/photos/order` | Bearer | Reorder photos `{ photoIds }` — the first is the cover |
+| DELETE | `/api/listings/:id/photos/:photoId` | Bearer | Delete a photo |
 | GET    | `/api/owner/summary` | Bearer | Host dashboard: earned, this month, upcoming value, per-listing stats |
 | GET    | `/api/owner/bookings` | Bearer | Bookings on my spaces: `?type=upcoming\|past\|cancelled&space=<id>` |
 
@@ -112,6 +116,8 @@ Authenticated requests send `Authorization: Bearer <token>`.
 **Search parameters** (`GET /api/listings`): `location` (a Pune area such as `Baner` searches nearby; anything else matches address text), `lat`/`lng`/`radius` (km), `minPrice`, `maxPrice`, `amenities` (comma-separated, all required), `vehicleSize` (`hatchback`, `sedan`, `suv`), `spaceType`, `is24x7`, `date` + `time` + `duration` (only spaces open for that slot), `sort` (`relevance`, `price_asc`, `price_desc`, `distance`, `newest`), `page`, `limit`.
 
 **Bookings** use Indian Standard Time and start on the hour or half-hour. Each booking records the 30-minute slots it covers, and a unique MongoDB index on `(space, slot)` for confirmed bookings guarantees a space can never be double-booked — even when two people book at the same moment. Online payment is not implemented yet; bookings show the total but no payment is taken.
+
+**Photos** are uploaded through the API (which checks ownership, type, size and count) and stored on [Cloudinary](https://cloudinary.com). The app requests resized, auto-format (WebP/AVIF) versions for each place an image appears. Tests replace Cloudinary with an in-memory fake, so they never touch a real account.
 
 ## Demo data
 

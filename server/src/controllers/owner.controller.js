@@ -60,7 +60,7 @@ export async function getOwnerSummary(req, res) {
         title: space.title,
         area: space.address.area,
         spaceType: space.spaceType,
-        photos: space.photos,
+        photos: space.photos.map((photo) => ({ id: photo._id.toString(), url: photo.url })),
         pricePerHour: space.pricePerHour,
         isPublished: space.isPublished,
         completedBookings: stats?.completedCount ?? 0,

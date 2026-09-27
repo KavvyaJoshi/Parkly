@@ -21,8 +21,10 @@ export function setUnauthorizedHandler(handler) {
 
 export async function apiRequest(path, { method = 'GET', body, auth = true } = {}) {
   const token = auth ? tokenStorage.get() : null;
+  const isFormData = body instanceof FormData;
   const headers = { Accept: 'application/json' };
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  // For FormData (file uploads) the browser sets the multipart Content-Type and boundary itself.
+  if (body !== undefined && !isFormData) headers['Content-Type'] = 'application/json';
   if (token) headers.Authorization = `Bearer ${token}`;
 
   let response;
@@ -30,7 +32,7 @@ export async function apiRequest(path, { method = 'GET', body, auth = true } = {
     response = await fetch(`${API_URL}${path}`, {
       method,
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
     });
   } catch {
     throw new ApiError('Can’t reach Parkly right now. Check your connection and try again.', 0);
@@ -50,5 +52,6 @@ export const api = {
   get: (path, options) => apiRequest(path, { ...options, method: 'GET' }),
   post: (path, body, options) => apiRequest(path, { ...options, method: 'POST', body }),
   patch: (path, body, options) => apiRequest(path, { ...options, method: 'PATCH', body }),
+  put: (path, body, options) => apiRequest(path, { ...options, method: 'PUT', body }),
   delete: (path, options) => apiRequest(path, { ...options, method: 'DELETE' }),
 };

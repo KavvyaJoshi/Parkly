@@ -16,4 +16,11 @@ export const SERVICE_AREA = {
   maxLng: 74.05,
 };
 
+export const PHOTO_LIMITS = {
+  maxPerListing: 8,
+  maxFileBytes: 5 * 1024 * 1024,
+  // HEIC/HEIF covers photos taken on iPhones; Cloudinary converts them for delivery.
+  mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'],
+};
+
 export const SEARCH_DEFAULTS = { radiusKm: 3, maxRadiusKm: 25, limit: 12, maxLimit: 50 };

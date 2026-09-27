@@ -7,7 +7,7 @@ import Container from '../components/ui/Container.jsx';
 import { PageSpinner } from '../components/ui/Spinner.jsx';
 import BookingPanel from '../components/listing/BookingPanel.jsx';
 import DemoBadge from '../components/listing/DemoBadge.jsx';
-import ListingPhoto from '../components/listing/ListingPhoto.jsx';
+import PhotoGallery from '../components/listing/PhotoGallery.jsx';
 import { AMENITIES, SPACE_TYPES, VEHICLE_FITS } from '../constants/listing.js';
 import { useApiQuery } from '../hooks/useApiQuery.js';
 import { listingsService } from '../services/listings.service.js';
@@ -101,7 +101,9 @@ export default function ListingDetailPage() {
         {listing.address.landmark && ` · ${listing.address.landmark}`}
       </p>
 
-      <ListingPhoto listing={listing} priority className="mt-6 h-64 w-full rounded-3xl sm:h-96" />
+      <div className="mt-6">
+        <PhotoGallery listing={listing} />
+      </div>
 
       <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_22rem]">
         <div>

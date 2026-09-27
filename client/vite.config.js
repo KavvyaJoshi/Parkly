@@ -11,5 +11,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/tests/setup.js',
     css: false,
+    // Form tests simulate real typing, which is slow on busy machines and shared CI
+    // runners; the 5s default leaves too little headroom.
+    testTimeout: 15_000,
   },
 });

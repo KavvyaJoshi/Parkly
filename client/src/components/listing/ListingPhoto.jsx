@@ -1,5 +1,6 @@
 import { SquareParking } from 'lucide-react';
 import { SPACE_TYPES } from '../../constants/listing.js';
+import { imageUrl } from '../../utils/images.js';
 
 const PLACEHOLDER_TONES = {
   driveway: 'from-amber-100 to-orange-200 text-orange-700',
@@ -10,13 +11,13 @@ const PLACEHOLDER_TONES = {
 };
 
 /** First listing photo, or a branded placeholder by space type until photos are uploaded. */
-export default function ListingPhoto({ listing, className = '', priority = false }) {
+export default function ListingPhoto({ listing, className = '', priority = false, size = 'card' }) {
   const photo = listing.photos?.[0];
 
   if (photo) {
     return (
       <img
-        src={photo.url}
+        src={imageUrl(photo.url, size)}
         alt={listing.title}
         className={`object-cover ${className}`}
         loading={priority ? undefined : 'lazy'}

@@ -3,13 +3,12 @@ import { AMENITIES, PRICE_LIMITS, SPACE_TYPES, VEHICLE_SIZES } from '../constant
 
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-const photoSchema = new mongoose.Schema(
-  {
-    url: { type: String, required: true },
-    publicId: String, // Cloudinary id, used to delete the image later
-  },
-  { _id: false },
-);
+// Each photo gets its own _id so the API can address it (delete, reorder).
+// The first photo is the cover image.
+const photoSchema = new mongoose.Schema({
+  url: { type: String, required: true },
+  publicId: String, // Cloudinary id, used to delete the image later
+});
 
 const availabilitySchema = new mongoose.Schema(
   {
@@ -87,7 +86,7 @@ export function serializeSpace(doc, { exact = false } = {}) {
     pricePerHour: space.pricePerHour,
     amenities: space.amenities,
     rules: space.rules,
-    photos: space.photos,
+    photos: (space.photos ?? []).map((photo) => ({ id: photo._id?.toString(), url: photo.url })),
     availability: space.availability,
     isPublished: space.isPublished,
     isDemo: space.isDemo,
