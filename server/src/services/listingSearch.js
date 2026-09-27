@@ -126,7 +126,7 @@ export async function searchListings(query) {
   const totalCount = total[0]?.count ?? 0;
 
   return {
-    listings: results.map(serializeSpace),
+    listings: results.map((doc) => serializeSpace(doc)),
     pagination: {
       page: query.page,
       limit: query.limit,

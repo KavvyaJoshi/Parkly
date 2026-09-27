@@ -12,20 +12,31 @@ import {
   toTimeInputValue,
 } from '../../utils/datetime.js';
 
-function getInitialValues() {
+function getInitialValues(initial = {}) {
   const slot = getNextSlot();
   return {
-    location: '',
-    date: toDateInputValue(slot),
-    time: toTimeInputValue(slot),
-    duration: '2',
+    location: initial.location ?? '',
+    date: initial.date || toDateInputValue(slot),
+    time: initial.time || toTimeInputValue(slot),
+    duration: initial.duration || '2',
   };
 }
 
-export default function SearchForm() {
+/**
+ * Location + date/time/duration search.
+ * - `initialValues`: prefill (e.g. from the current URL on the search page)
+ * - `requireLocation`: when false, an empty location searches all of Pune
+ * - `preserveParams`: existing params (filters, sort) to carry into the new search
+ */
+export default function SearchForm({
+  initialValues,
+  requireLocation = true,
+  preserveParams,
+  className = 'shadow-xl shadow-slate-900/10',
+}) {
   const id = useId();
   const navigate = useNavigate();
-  const [values, setValues] = useState(getInitialValues);
+  const [values, setValues] = useState(() => getInitialValues(initialValues));
   const [error, setError] = useState('');
 
   const handleChange = (e) => {
@@ -37,7 +48,7 @@ export default function SearchForm() {
     e.preventDefault();
 
     const location = values.location.trim();
-    if (!location) {
+    if (!location && requireLocation) {
       setError('Enter an area or landmark to search for parking.');
       return;
     }
@@ -46,7 +57,13 @@ export default function SearchForm() {
       return;
     }
 
-    const params = new URLSearchParams({ ...values, location });
+    const params = new URLSearchParams(preserveParams);
+    params.delete('page');
+    if (location) params.set('location', location);
+    else params.delete('location');
+    params.set('date', values.date);
+    params.set('time', values.time);
+    params.set('duration', values.duration);
     navigate(`/search?${params}`);
   };
 
@@ -60,7 +77,7 @@ export default function SearchForm() {
       method="get"
       noValidate
       onSubmit={handleSubmit}
-      className="rounded-2xl bg-white p-4 shadow-xl ring-1 shadow-slate-900/10 ring-slate-200 sm:p-5"
+      className={`rounded-2xl bg-white p-4 ring-1 ring-slate-200 sm:p-5 ${className}`}
     >
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_auto] lg:items-end">
         <div className="md:col-span-2 lg:col-span-1">
@@ -77,7 +94,7 @@ export default function SearchForm() {
               name="location"
               type="text"
               list={`${id}-areas`}
-              placeholder="e.g. Baner, Hinjawadi Phase 1"
+              placeholder={requireLocation ? 'e.g. Baner, Hinjawadi Phase 1' : 'All of Pune, or type an area'}
               autoComplete="off"
               enterKeyHint="search"
               required

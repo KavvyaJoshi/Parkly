@@ -1,6 +1,41 @@
 import { describe, it, expect } from 'vitest';
 
-import { formatINR, formatHours } from '../utils/format.js';
+import { formatINR, formatHours, formatDistance } from '../utils/format.js';
+import { formatAvailability, formatDays, isOpenForSlot } from '../utils/availability.js';
+
+describe('availability helpers', () => {
+  it('summarises days', () => {
+    expect(formatDays([0, 1, 2, 3, 4, 5, 6])).toBe('Every day');
+    expect(formatDays([1, 2, 3, 4, 5])).toBe('Mon–Fri');
+    expect(formatDays([1, 2, 3, 4, 5, 6])).toBe('Mon–Sat');
+    expect(formatDays([0, 6])).toBe('Sat & Sun');
+    expect(formatDays([1, 3])).toBe('Mon, Wed');
+  });
+
+  it('formats opening hours', () => {
+    expect(formatAvailability({ is24x7: true })).toBe('Open 24×7');
+    expect(formatAvailability({ is24x7: false, days: [1, 2, 3, 4, 5], startTime: '09:00', endTime: '19:00' })).toBe(
+      'Mon–Fri, 9:00 AM – 7:00 PM',
+    );
+  });
+
+  it('checks whether a slot fits the schedule', () => {
+    const weekdays = { is24x7: false, days: [1, 2, 3, 4, 5], startTime: '09:00', endTime: '19:00' };
+    // 2030-01-07 is a Monday, 2030-01-06 a Sunday.
+    expect(isOpenForSlot(weekdays, { date: '2030-01-07', time: '09:00', duration: '10' })).toBe(true);
+    expect(isOpenForSlot(weekdays, { date: '2030-01-07', time: '18:00', duration: '2' })).toBe(false);
+    expect(isOpenForSlot(weekdays, { date: '2030-01-06', time: '10:00', duration: '1' })).toBe(false);
+    expect(isOpenForSlot({ is24x7: true }, { date: '2030-01-06', time: '23:00', duration: '4' })).toBe(true);
+    expect(isOpenForSlot(weekdays, { date: '2030-01-07' })).toBeNull();
+  });
+});
+
+describe('formatDistance', () => {
+  it('uses metres below 1 km', () => {
+    expect(formatDistance(354)).toBe('350 m');
+    expect(formatDistance(2394)).toBe('2.4 km');
+  });
+});
 import { combineDateAndTime, getNextSlot, toDateInputValue, toTimeInputValue } from '../utils/datetime.js';
 
 describe('formatINR', () => {

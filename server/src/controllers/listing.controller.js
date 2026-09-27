@@ -42,24 +42,24 @@ export async function getListing(req, res) {
     throw new AppError('Parking space not found', 404);
   }
 
-  res.json({ success: true, listing: serializeSpace(space) });
+  res.json({ success: true, listing: serializeSpace(space, { exact: Boolean(isOwner) }) });
 }
 
 export async function getMyListings(req, res) {
   const spaces = await ParkingSpace.find({ owner: req.user._id }).sort({ createdAt: -1 });
-  res.json({ success: true, listings: spaces.map(serializeSpace) });
+  res.json({ success: true, listings: spaces.map((s) => serializeSpace(s, { exact: true })) });
 }
 
 export async function createListing(req, res) {
   const space = await ParkingSpace.create({ ...toDocumentFields(req.body), owner: req.user._id });
-  res.status(201).json({ success: true, listing: serializeSpace(space) });
+  res.status(201).json({ success: true, listing: serializeSpace(space, { exact: true }) });
 }
 
 export async function updateListing(req, res) {
   const space = await findOwnedSpace(req.params.id, req.user);
   space.set(toDocumentFields(req.body));
   await space.save();
-  res.json({ success: true, listing: serializeSpace(space) });
+  res.json({ success: true, listing: serializeSpace(space, { exact: true }) });
 }
 
 export async function deleteListing(req, res) {

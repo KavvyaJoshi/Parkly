@@ -149,6 +149,24 @@ describe('GET /api/listings/:id', () => {
     expect((await request(app).get(url).set('Authorization', owner.auth)).status).toBe(200);
   });
 
+  it('hides the street address and exact position from the public, but not the owner', async () => {
+    const { auth } = await createUser();
+    const { body } = await createListing(auth, { location: { lat: 18.561234, lng: 73.787654 } });
+    const url = `/api/listings/${body.listing.id}`;
+
+    const publicView = (await request(app).get(url)).body.listing;
+    expect(publicView.address).not.toHaveProperty('line1');
+    expect(publicView.location).toEqual({ lat: 18.561, lng: 73.788 });
+    expect(publicView.isExactLocation).toBe(false);
+
+    const searchView = (await search({ location: 'Baner' })).body.listings[0];
+    expect(searchView.address).not.toHaveProperty('line1');
+
+    const ownerView = (await request(app).get(url).set('Authorization', auth)).body.listing;
+    expect(ownerView.address.line1).toBe('Lane 5, Baner Road');
+    expect(ownerView.location).toEqual({ lat: 18.561234, lng: 73.787654 });
+  });
+
   it('returns 404 for malformed ids', async () => {
     const res = await request(app).get('/api/listings/not-an-id');
     expect(res.status).toBe(404);

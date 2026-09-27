@@ -60,11 +60,20 @@ const parkingSpaceSchema = new mongoose.Schema(
 parkingSpaceSchema.index({ location: '2dsphere' });
 parkingSpaceSchema.index({ isPublished: 1, pricePerHour: 1 });
 
-/** Convert a document (or a plain aggregate result) into the public API shape. */
-export function serializeSpace(doc) {
+// ~100 m precision for public map positions.
+const approx = (n) => Math.round(n * 1000) / 1000;
+
+/**
+ * Convert a document (or a plain aggregate result) into the API shape.
+ * By default this is the public view: the street address is hidden and the map
+ * position is approximate. Pass { exact: true } for the owner (and, later, drivers
+ * with a confirmed booking).
+ */
+export function serializeSpace(doc, { exact = false } = {}) {
   const space = typeof doc.toObject === 'function' ? doc.toObject() : { ...doc };
   const [lng, lat] = space.location.coordinates;
   const owner = space.owner;
+  const { line1, ...publicAddress } = space.address;
 
   return {
     id: space._id.toString(),
@@ -72,8 +81,9 @@ export function serializeSpace(doc) {
     description: space.description,
     spaceType: space.spaceType,
     vehicleSize: space.vehicleSize,
-    address: space.address,
-    location: { lat, lng },
+    address: exact ? { line1, ...publicAddress } : publicAddress,
+    location: exact ? { lat, lng } : { lat: approx(lat), lng: approx(lng) },
+    isExactLocation: exact,
     pricePerHour: space.pricePerHour,
     amenities: space.amenities,
     rules: space.rules,

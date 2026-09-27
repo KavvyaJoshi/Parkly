@@ -4,6 +4,8 @@ import MainLayout from './layouts/MainLayout.jsx';
 import ProtectedRoute from './routes/ProtectedRoute.jsx';
 import GuestRoute from './routes/GuestRoute.jsx';
 import HomePage from './pages/HomePage.jsx';
+import SearchPage from './pages/SearchPage.jsx';
+import ListingDetailPage from './pages/ListingDetailPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import SignupPage from './pages/SignupPage.jsx';
 import AccountPage from './pages/AccountPage.jsx';
@@ -15,15 +17,8 @@ export default function App() {
     <Routes>
       <Route element={<MainLayout />}>
         <Route index element={<HomePage />} />
-        <Route
-          path="search"
-          element={
-            <PlaceholderPage
-              title="Search is on its way"
-              description="Browsing and filtering parking spaces in Pune is coming soon."
-            />
-          }
-        />
+        <Route path="search" element={<SearchPage />} />
+        <Route path="listings/:id" element={<ListingDetailPage />} />
         <Route
           path="list-your-space"
           element={
