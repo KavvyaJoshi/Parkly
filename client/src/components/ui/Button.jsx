@@ -18,10 +18,12 @@ const sizes = {
 };
 
 /**
- * Renders a router <Link> when `to` is given, otherwise a native <button>.
+ * Renders a router <Link> when `to` is given, an external <a> (new tab) for `href`,
+ * otherwise a native <button>.
  */
 export default function Button({
   to,
+  href,
   variant = 'primary',
   size = 'md',
   className = '',
@@ -36,6 +38,14 @@ export default function Button({
       <Link to={to} className={classes} {...props}>
         {children}
       </Link>
+    );
+  }
+
+  if (href) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={classes} {...props}>
+        {children}
+      </a>
     );
   }
 

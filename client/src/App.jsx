@@ -9,6 +9,8 @@ import ListingDetailPage from './pages/ListingDetailPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import SignupPage from './pages/SignupPage.jsx';
 import AccountPage from './pages/AccountPage.jsx';
+import CheckoutPage from './pages/CheckoutPage.jsx';
+import BookingDetailPage from './pages/BookingDetailPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import PlaceholderPage from './pages/PlaceholderPage.jsx';
 
@@ -36,6 +38,8 @@ export default function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route path="account" element={<AccountPage />} />
+          <Route path="book/:listingId" element={<CheckoutPage />} />
+          <Route path="bookings/:id" element={<BookingDetailPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

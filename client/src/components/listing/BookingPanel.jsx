@@ -28,8 +28,11 @@ export default function BookingPanel({ listing, initial = {} }) {
   const hours = Number(slot.duration);
   const total = listing.pricePerHour * hours;
   const isPast = combineDateAndTime(slot.date, slot.time) < new Date();
+  const isAligned = /:(00|30)$/.test(slot.time);
   const isOpen = isOpenForSlot(listing.availability, slot);
   const isOwner = user && listing.owner?.id === user.id;
+  const canBook = !isPast && isAligned && isOpen;
+  const checkoutUrl = `/book/${listing.id}?${new URLSearchParams(slot)}`;
 
   const handleChange = (e) => setSlot((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   const durationOptions = DURATION_OPTIONS.includes(hours) ? DURATION_OPTIONS : [...DURATION_OPTIONS, hours].sort((a, b) => a - b);
@@ -96,6 +99,11 @@ export default function BookingPanel({ listing, initial = {} }) {
             <XCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             That start time has already passed.
           </p>
+        ) : !isAligned ? (
+          <p className="flex items-start gap-2 text-sm text-red-700">
+            <XCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            Bookings start on the hour or half-hour (e.g. 10:00 or 10:30).
+          </p>
         ) : isOpen ? (
           <p className="flex items-start gap-2 text-sm text-emerald-700">
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
@@ -128,17 +136,19 @@ export default function BookingPanel({ listing, initial = {} }) {
         {isOwner ? (
           <p className="rounded-xl bg-slate-50 p-4 text-center text-sm text-slate-600">This is your listing.</p>
         ) : status !== 'authenticated' ? (
-          <Button to="/login" state={{ from: location }} size="lg" className="w-full">
+          <Button to="/login" state={{ from: { ...location, pathname: `/book/${listing.id}`, search: `?${new URLSearchParams(slot)}` } }} size="lg" className="w-full">
             Log in to book
           </Button>
+        ) : canBook ? (
+          <Button to={checkoutUrl} size="lg" className="w-full">
+            Book now
+          </Button>
         ) : (
-          <>
-            <Button size="lg" className="w-full" disabled>
-              Book now
-            </Button>
-            <p className="mt-2 text-center text-xs text-slate-500">Online booking is launching soon.</p>
-          </>
+          <Button size="lg" className="w-full" disabled>
+            Book now
+          </Button>
         )}
+        {!isOwner && <p className="mt-2 text-center text-xs text-slate-500">You won’t be charged yet</p>}
       </div>
     </div>
   );

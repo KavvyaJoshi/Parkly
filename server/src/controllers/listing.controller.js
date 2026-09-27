@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 
+import { Booking } from '../models/Booking.js';
 import { ParkingSpace, serializeSpace } from '../models/ParkingSpace.js';
 import { searchListings } from '../services/listingSearch.js';
 import { AppError } from '../utils/AppError.js';
@@ -64,6 +65,19 @@ export async function updateListing(req, res) {
 
 export async function deleteListing(req, res) {
   const space = await findOwnedSpace(req.params.id, req.user);
+
+  const hasUpcomingBookings = await Booking.exists({
+    space: space._id,
+    status: 'confirmed',
+    endTime: { $gt: new Date() },
+  });
+  if (hasUpcomingBookings) {
+    throw new AppError(
+      'This space has upcoming bookings, so it can’t be deleted. Unpublish it to stop new bookings instead.',
+      409,
+    );
+  }
+
   await space.deleteOne();
   res.json({ success: true, message: 'Parking space deleted' });
 }

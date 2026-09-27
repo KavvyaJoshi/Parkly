@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 
+import { Booking } from '../models/Booking.js';
 import { ParkingSpace } from '../models/ParkingSpace.js';
 import { User } from '../models/User.js';
 import { PUNE_AREAS } from '../data/puneAreas.js';
@@ -12,6 +13,8 @@ const round = (n) => Math.round(n * 1e6) / 1e6;
  * Demo hosts get random passwords, so nobody can log in as them.
  */
 export async function seedDemoData() {
+  // Test bookings on demo spaces would point at spaces that no longer exist.
+  await Booking.deleteMany({ isDemo: true });
   await ParkingSpace.deleteMany({ isDemo: true });
   await User.deleteMany({ isDemo: true });
 

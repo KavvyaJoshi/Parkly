@@ -1,4 +1,6 @@
+import { Booking } from '../models/Booking.js';
 import { ParkingSpace, serializeSpace } from '../models/ParkingSpace.js';
+import { istToDate } from '../utils/time.js';
 import { SEARCH_DEFAULTS, VEHICLE_SIZES } from '../constants/listing.js';
 import { findArea } from '../data/puneAreas.js';
 
@@ -71,6 +73,18 @@ export async function searchListings(query) {
   }
   const schedule = scheduleFilter(query);
   if (schedule) filters.push(schedule);
+
+  // Hide spaces that already have a confirmed booking overlapping the requested slot.
+  if (query.date && query.time) {
+    const start = istToDate(query.date, query.time);
+    const end = new Date(start.getTime() + (query.duration ?? 1) * 60 * 60 * 1000);
+    const bookedSpaceIds = await Booking.distinct('space', {
+      status: 'confirmed',
+      startTime: { $lt: end },
+      endTime: { $gt: start },
+    });
+    if (bookedSpaceIds.length) filters.push({ _id: { $nin: bookedSpaceIds } });
+  }
 
   // Work out where to search around: explicit coordinates, or a known Pune area name.
   let center = null;
