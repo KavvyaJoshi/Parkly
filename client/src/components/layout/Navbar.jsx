@@ -5,6 +5,8 @@ import { Menu, X } from 'lucide-react';
 import Logo from '../ui/Logo.jsx';
 import Button from '../ui/Button.jsx';
 import Container from '../ui/Container.jsx';
+import UserMenu from './UserMenu.jsx';
+import { useAuth } from '../../hooks/useAuth.js';
 
 const NAV_LINKS = [
   { label: 'Find parking', to: '/search' },
@@ -19,6 +21,7 @@ const linkClass = ({ isActive }) =>
   }`;
 
 export default function Navbar() {
+  const { status, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
 
@@ -50,13 +53,18 @@ export default function Navbar() {
             )}
           </div>
 
-          <div className="hidden items-center gap-2 md:flex">
-            <Button to="/login" variant="ghost" size="sm">
-              Log in
-            </Button>
-            <Button to="/signup" size="sm">
-              Sign up
-            </Button>
+          <div className="hidden min-w-40 items-center justify-end gap-2 md:flex">
+            {status === 'authenticated' && <UserMenu />}
+            {status === 'unauthenticated' && (
+              <>
+                <Button to="/login" variant="ghost" size="sm">
+                  Log in
+                </Button>
+                <Button to="/signup" size="sm">
+                  Sign up
+                </Button>
+              </>
+            )}
           </div>
 
           <button
@@ -89,12 +97,31 @@ export default function Navbar() {
               ))}
             </ul>
             <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-200 pt-4">
-              <Button to="/login" variant="secondary" onClick={closeMenu}>
-                Log in
-              </Button>
-              <Button to="/signup" onClick={closeMenu}>
-                Sign up
-              </Button>
+              {status === 'authenticated' ? (
+                <>
+                  <Button to="/account" variant="secondary" onClick={closeMenu}>
+                    My account
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      closeMenu();
+                      logout();
+                    }}
+                  >
+                    Log out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button to="/login" variant="secondary" onClick={closeMenu}>
+                    Log in
+                  </Button>
+                  <Button to="/signup" onClick={closeMenu}>
+                    Sign up
+                  </Button>
+                </>
+              )}
             </div>
           </Container>
         </div>

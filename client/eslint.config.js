@@ -25,6 +25,10 @@ export default [
     },
   },
   {
+    files: ['src/tests/**'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
+  {
     files: ['vite.config.js', 'eslint.config.js'],
     languageOptions: { globals: globals.node },
   },

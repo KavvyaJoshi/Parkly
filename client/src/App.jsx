@@ -1,7 +1,12 @@
 import { Routes, Route } from 'react-router';
 
 import MainLayout from './layouts/MainLayout.jsx';
+import ProtectedRoute from './routes/ProtectedRoute.jsx';
+import GuestRoute from './routes/GuestRoute.jsx';
 import HomePage from './pages/HomePage.jsx';
+import LoginPage from './pages/LoginPage.jsx';
+import SignupPage from './pages/SignupPage.jsx';
+import AccountPage from './pages/AccountPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import PlaceholderPage from './pages/PlaceholderPage.jsx';
 
@@ -28,14 +33,16 @@ export default function App() {
             />
           }
         />
-        <Route
-          path="login"
-          element={<PlaceholderPage title="Log in" description="Accounts are coming soon." />}
-        />
-        <Route
-          path="signup"
-          element={<PlaceholderPage title="Create an account" description="Accounts are coming soon." />}
-        />
+
+        <Route element={<GuestRoute />}>
+          <Route path="login" element={<LoginPage />} />
+          <Route path="signup" element={<SignupPage />} />
+        </Route>
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="account" element={<AccountPage />} />
+        </Route>
+
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

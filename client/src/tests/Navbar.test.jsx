@@ -4,13 +4,16 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 
 import Navbar from '../components/layout/Navbar.jsx';
+import AuthProvider from '../context/AuthProvider.jsx';
 
 describe('Navbar mobile menu', () => {
   it('opens and closes with the menu button', async () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <Navbar />
+        <AuthProvider>
+          <Navbar />
+        </AuthProvider>
       </MemoryRouter>,
     );
 
