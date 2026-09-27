@@ -104,6 +104,8 @@ npm run dev             # http://localhost:5173
 | GET    | `/api/bookings/mine` | Bearer | My bookings as a driver: `?type=upcoming\|past\|cancelled`, with counts |
 | GET    | `/api/bookings/:id`  | Bearer | Booking details (driver or space owner only) |
 | PATCH  | `/api/bookings/:id/cancel` | Bearer | Cancel before the start time (driver or space owner) |
+| GET    | `/api/owner/summary` | Bearer | Host dashboard: earned, this month, upcoming value, per-listing stats |
+| GET    | `/api/owner/bookings` | Bearer | Bookings on my spaces: `?type=upcoming\|past\|cancelled&space=<id>` |
 
 Authenticated requests send `Authorization: Bearer <token>`.
 

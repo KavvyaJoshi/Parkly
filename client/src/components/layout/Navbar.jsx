@@ -106,6 +106,17 @@ export default function Navbar() {
                   </Link>
                 </li>
               )}
+              {status === 'authenticated' && (
+                <li>
+                  <Link
+                    to="/host"
+                    onClick={closeMenu}
+                    className="block rounded-lg px-3 py-3 text-base font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    Host dashboard
+                  </Link>
+                </li>
+              )}
             </ul>
             <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-200 pt-4">
               {status === 'authenticated' ? (

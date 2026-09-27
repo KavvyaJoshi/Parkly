@@ -123,17 +123,22 @@ const MY_BOOKING_VIEWS = {
   cancelled: { filter: () => ({ status: 'cancelled' }), sort: { cancelledAt: -1 } },
 };
 
-/** The current user's bookings as a driver, split into upcoming (incl. in progress), past and cancelled. */
-export async function getMyBookings(req, res) {
+/**
+ * List bookings split into upcoming (incl. in progress), past and cancelled, with counts.
+ * `role` decides whose bookings: 'driver' (bookings I made) or 'owner' (bookings on my spaces).
+ */
+async function listBookings(req, res, role) {
   const type = MY_BOOKING_VIEWS[req.query.type] ? req.query.type : 'upcoming';
   const now = new Date();
-  const mine = { driver: req.user._id };
+  const mine = { [role]: req.user._id };
+  if (role === 'owner' && mongoose.isValidObjectId(req.query.space)) mine.space = req.query.space;
 
   const [bookings, ...counts] = await Promise.all([
     Booking.find({ ...mine, ...MY_BOOKING_VIEWS[type].filter(now) })
       .sort(MY_BOOKING_VIEWS[type].sort)
       .limit(100)
-      .populate(SPACE_WITH_HOST),
+      .populate(SPACE_WITH_HOST)
+      .populate('driver', 'name phone'),
     ...Object.values(MY_BOOKING_VIEWS).map((view) => Booking.countDocuments({ ...mine, ...view.filter(now) })),
   ]);
 
@@ -145,6 +150,9 @@ export async function getMyBookings(req, res) {
     bookings: bookings.filter((b) => b.space).map((b) => serializeBooking(b, req.user)),
   });
 }
+
+export const getMyBookings = (req, res) => listBookings(req, res, 'driver');
+export const getOwnerBookings = (req, res) => listBookings(req, res, 'owner');
 
 /** Cancel a booking before it starts. Either the driver or the space owner may cancel. */
 export async function cancelBooking(req, res) {

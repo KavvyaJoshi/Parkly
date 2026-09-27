@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 
 import Logo from '../ui/Logo.jsx';
 import Container from '../ui/Container.jsx';
+import { useAuth } from '../../hooks/useAuth.js';
 
 const FOOTER_COLUMNS = [
   {
@@ -19,16 +20,26 @@ const FOOTER_COLUMNS = [
       { label: 'Why list with Parkly', to: '/#list-your-space' },
     ],
   },
-  {
-    title: 'Account',
-    links: [
-      { label: 'Log in', to: '/login' },
-      { label: 'Sign up', to: '/signup' },
-    ],
-  },
+];
+
+const GUEST_ACCOUNT_LINKS = [
+  { label: 'Log in', to: '/login' },
+  { label: 'Sign up', to: '/signup' },
+];
+
+const MEMBER_ACCOUNT_LINKS = [
+  { label: 'My bookings', to: '/bookings' },
+  { label: 'Host dashboard', to: '/host' },
+  { label: 'My account', to: '/account' },
 ];
 
 export default function Footer() {
+  const { isAuthenticated } = useAuth();
+  const columns = [
+    ...FOOTER_COLUMNS,
+    { title: 'Account', links: isAuthenticated ? MEMBER_ACCOUNT_LINKS : GUEST_ACCOUNT_LINKS },
+  ];
+
   return (
     <footer className="border-t border-slate-200 bg-slate-50">
       <Container className="py-12">
@@ -40,7 +51,7 @@ export default function Footer() {
             </p>
           </div>
 
-          {FOOTER_COLUMNS.map((column) => (
+          {columns.map((column) => (
             <div key={column.title}>
               <h2 className="text-sm font-semibold text-slate-900">{column.title}</h2>
               <ul className="mt-4 space-y-3">

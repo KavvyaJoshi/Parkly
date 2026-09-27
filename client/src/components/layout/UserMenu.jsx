@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { CalendarCheck, ChevronDown, LogOut, UserRound } from 'lucide-react';
+import { CalendarCheck, ChevronDown, LayoutDashboard, LogOut, UserRound } from 'lucide-react';
 
 import { useAuth } from '../../hooks/useAuth.js';
 import { getInitials } from '../../utils/format.js';
@@ -71,6 +71,16 @@ export default function UserMenu() {
               >
                 <CalendarCheck className="h-4 w-4" aria-hidden="true" />
                 My bookings
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/host"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+              >
+                <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
+                Host dashboard
               </Link>
             </li>
             <li>

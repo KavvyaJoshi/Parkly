@@ -63,9 +63,12 @@ export default function AccountPage() {
               Have a spare space?
             </h2>
             <p className="mt-1 text-sm text-slate-600">List it for free and earn by the hour.</p>
-            <Button to="/list-your-space" variant="secondary" className="mt-4">
-              List your space
-            </Button>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Button to="/host">Host dashboard</Button>
+              <Button to="/host/listings/new" variant="secondary">
+                List a space
+              </Button>
+            </div>
           </div>
         </div>
       </div>

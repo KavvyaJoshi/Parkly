@@ -186,7 +186,7 @@ export default function BookingDetailPage() {
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           {isOwnerView ? (
-            <Button to="/search">Find parking</Button>
+            <Button to="/host/bookings">Bookings on your spaces</Button>
           ) : (
             <>
               <Button to="/bookings">My bookings</Button>

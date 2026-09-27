@@ -37,6 +37,7 @@ export default function BookingCard({ booking }) {
             <li className="flex items-center gap-1.5">
               <Car className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
               <span className="font-mono">{booking.vehicleNumber}</span>
+              {booking.driver?.name && <span>· {booking.driver.name}</span>}
             </li>
           </ul>
         </div>
