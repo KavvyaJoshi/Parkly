@@ -1,11 +1,15 @@
 import { createApp } from './app.js';
-import { env } from './config/env.js';
+import { checkProductionConfig, env } from './config/env.js';
 import { connectDB, disconnectDB } from './config/db.js';
 
 async function start() {
-  if (env.isProduction && !env.mongoUri) {
-    console.error('[db] MONGODB_URI must be set in production.');
-    process.exit(1);
+  if (env.isProduction) {
+    const { missing, warnings } = checkProductionConfig();
+    warnings.forEach((warning) => console.warn(`[config] ${warning}`));
+    if (missing.length) {
+      console.error(`[config] Missing required environment variables: ${missing.join(', ')}`);
+      process.exit(1);
+    }
   }
 
   try {

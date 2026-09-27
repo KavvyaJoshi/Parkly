@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router';
 
 import Navbar from '../components/layout/Navbar.jsx';
 import Footer from '../components/layout/Footer.jsx';
+import ServerWakeBanner from '../components/layout/ServerWakeBanner.jsx';
 
 // Scroll to the top on page changes, or to the matching section for "#hash" links.
 function useScrollOnNavigate() {
@@ -33,6 +34,7 @@ export default function MainLayout() {
         <Outlet />
       </main>
       <Footer />
+      <ServerWakeBanner />
     </div>
   );
 }

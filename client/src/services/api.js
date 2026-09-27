@@ -14,6 +14,35 @@ export class ApiError extends Error {
 
 let onUnauthorized = null;
 
+// --- Slow-request tracking -------------------------------------------------
+// The free API host sleeps when idle and takes up to a minute to wake. Anything
+// can subscribe to learn when requests have been pending for a while.
+export const SLOW_REQUEST_MS = 4000;
+let slowCount = 0;
+const slowListeners = new Set();
+
+/** Subscribe to "requests are slow" changes. Returns an unsubscribe function. */
+export function onSlowRequestsChange(listener) {
+  slowListeners.add(listener);
+  return () => slowListeners.delete(listener);
+}
+
+function trackSlow() {
+  let isSlow = false;
+  const timer = setTimeout(() => {
+    isSlow = true;
+    slowCount += 1;
+    if (slowCount === 1) slowListeners.forEach((listener) => listener(true));
+  }, SLOW_REQUEST_MS);
+
+  return () => {
+    clearTimeout(timer);
+    if (!isSlow) return;
+    slowCount -= 1;
+    if (slowCount === 0) slowListeners.forEach((listener) => listener(false));
+  };
+}
+
 /** Register a callback for when an authenticated request is rejected (expired session). */
 export function setUnauthorizedHandler(handler) {
   onUnauthorized = handler;
@@ -28,17 +57,20 @@ export async function apiRequest(path, { method = 'GET', body, auth = true } = {
   if (token) headers.Authorization = `Bearer ${token}`;
 
   let response;
+  let data;
+  const doneTracking = trackSlow();
   try {
     response = await fetch(`${API_URL}${path}`, {
       method,
       headers,
       body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
     });
+    data = await response.json().catch(() => ({}));
   } catch {
     throw new ApiError('Can’t reach Parkly right now. Check your connection and try again.', 0);
+  } finally {
+    doneTracking();
   }
-
-  const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
     if (response.status === 401 && token && onUnauthorized) onUnauthorized();

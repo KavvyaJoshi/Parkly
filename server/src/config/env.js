@@ -12,6 +12,18 @@ function resolveJwtSecret() {
   return 'parkly-dev-only-secret-change-me';
 }
 
+/**
+ * Settings the API can't run without in production, and ones that only disable a feature.
+ * Returns { missing, warnings } so the server can refuse to start with a clear message.
+ */
+export function checkProductionConfig(source = process.env) {
+  const missing = ['MONGODB_URI', 'JWT_SECRET', 'CLIENT_URL'].filter((key) => !source[key]);
+  const warnings = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'].some((key) => !source[key])
+    ? ['Cloudinary is not configured - photo uploads are disabled.']
+    : [];
+  return { missing, warnings };
+}
+
 export const env = {
   nodeEnv,
   isProduction,

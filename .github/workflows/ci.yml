@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 
 on:
   push:
@@ -66,3 +66,42 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test
+
+  # Continuous deployment: only after every CI job has passed on main.
+  deploy-api:
+    name: Deploy API to Render
+    needs: [client, server]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - name: Trigger Render deploy
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "::notice::RENDER_DEPLOY_HOOK_URL secret is not set yet - skipping deploy."
+            exit 0
+          fi
+          curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK_URL" > /dev/null
+          echo "Render deploy triggered for ${GITHUB_SHA::7}."
+
+      - name: Smoke-test the live API
+        if: vars.API_URL != ''
+        env:
+          API_URL: ${{ vars.API_URL }}
+        run: |
+          # The free instance may be asleep or restarting; retry for up to ~5 minutes.
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --max-time 20 "$API_URL/api/health" | grep -q '"database":"connected"'; then
+              echo "Live API is healthy and connected to the database."
+              exit 0
+            fi
+            echo "Attempt $attempt: not ready yet, retrying in 10s..."
+            sleep 10
+          done
+          echo "::error::Live API did not become healthy in time."
+          exit 1

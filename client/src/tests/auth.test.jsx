@@ -136,7 +136,7 @@ describe('Protected routes and sessions', () => {
     renderApp('/account');
 
     expect(screen.getByRole('heading', { name: /welcome back/i })).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent(/please log in to continue/i);
+    expect(screen.getByText(/please log in to continue/i)).toBeInTheDocument();
 
     await fillLogin(user, 'priya@example.com', 'secret123');
 
