@@ -22,6 +22,7 @@ async function start() {
   const app = createApp();
   const server = app.listen(env.port, () => {
     console.log(`[server] Parkly API listening on http://localhost:${env.port} (${env.nodeEnv})`);
+    console.log(`[server] Allowed browser origins (CORS): ${env.clientUrls.join(', ')}`);
   });
 
   const shutdown = (signal) => {

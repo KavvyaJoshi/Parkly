@@ -1,5 +1,18 @@
 import { describe, it, expect } from 'vitest';
-import { checkProductionConfig } from '../config/env.js';
+import { checkProductionConfig, parseAllowedOrigins } from '../config/env.js';
+
+describe('parseAllowedOrigins', () => {
+  it('turns CLIENT_URL into exact browser origins, forgiving paste mistakes', () => {
+    expect(parseAllowedOrigins(' https://Parkly-Omega-Dun.vercel.app/ , http://localhost:5173.')).toEqual([
+      'https://parkly-omega-dun.vercel.app',
+      'http://localhost:5173',
+    ]);
+  });
+
+  it('defaults to the local dev client', () => {
+    expect(parseAllowedOrigins()).toEqual(['http://localhost:5173']);
+  });
+});
 
 const complete = {
   MONGODB_URI: 'mongodb+srv://example',

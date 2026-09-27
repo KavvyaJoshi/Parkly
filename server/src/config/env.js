@@ -24,6 +24,18 @@ export function checkProductionConfig(source = process.env) {
   return { missing, warnings };
 }
 
+/**
+ * Turn a comma-separated CLIENT_URL into exact browser origins. Browsers send origins
+ * as scheme://host[:port] with no path or trailing slash, so tolerate common paste
+ * mistakes (spaces, trailing "/" or ".", capital letters).
+ */
+export function parseAllowedOrigins(value = 'http://localhost:5173') {
+  return value
+    .split(',')
+    .map((url) => url.trim().replace(/[/.]+$/, '').toLowerCase())
+    .filter(Boolean);
+}
+
 export const env = {
   nodeEnv,
   isProduction,
@@ -38,8 +50,5 @@ export const env = {
     apiSecret: process.env.CLOUDINARY_API_SECRET || '',
   },
   // Comma-separated list of origins allowed to call the API.
-  clientUrls: (process.env.CLIENT_URL || 'http://localhost:5173')
-    .split(',')
-    .map((url) => url.trim())
-    .filter(Boolean),
+  clientUrls: parseAllowedOrigins(process.env.CLIENT_URL || undefined),
 };
